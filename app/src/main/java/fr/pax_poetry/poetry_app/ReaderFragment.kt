@@ -9,6 +9,7 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.viewpager2.adapter.FragmentStateAdapter
+import androidx.viewpager2.widget.MarginPageTransformer
 import androidx.viewpager2.widget.ViewPager2
 import fr.pax_poetry.poetry_app.metier.PoemItem
 
@@ -45,7 +46,7 @@ class ReaderFragment() : Fragment() {
         mPager!!.adapter = pagerAdapter
         //mPager.offsetLeftAndRight(3)
         mPager.setSaveEnabled(false)
-
+        mPager.setPageTransformer(MarginPageTransformer(80))
         mPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
             override fun onPageSelected(position: Int) {
                 passData(position)
