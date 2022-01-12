@@ -3,6 +3,11 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="..\:/Developpement/Android-Projects/Poetry_app/app/src/main/res/layout/activity_main.xml" value="0.18072916666666666" />
+        <entry key="..\:/Developpement/Android-Projects/Poetry_app/app/src/main/res/layout/fragment_blank.xml" value="0.16979166666666667" />
+        <entry key="..\:/Developpement/Android-Projects/Poetry_app/app/src/main/res/layout/poem_cardview.xml" value="0.16979166666666667" />
+        <entry key="..\:/Developpement/Android-Projects/Poetry_app/app/src/main/res/layout/reading_fragment_layout.xml" value="0.19583333333333333" />
+        <entry key="..\:/Developpement/Android-Projects/Poetry_app/app/src/main/res/layout/writing_fragment_layout.xml" value="0.19583333333333333" />
         <entry key="..\:/Users/pbail/AndroidStudioProjects/Poetry_app/app/src/main/res/layout/activity_main.xml" value="0.2957427536231884" />
       </map>
     </option>
