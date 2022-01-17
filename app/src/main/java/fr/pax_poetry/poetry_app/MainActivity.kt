@@ -25,20 +25,28 @@ class MainActivity : ReaderFragment.OnPositionPass, AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        //Send the API Client to the writer fragment
+        val args = Bundle()
+        args.putParcelable("ClientPoetryAPI", clientPoetryAPI)
+        writerFragment.arguments = args
+
+        getSupportFragmentManager().beginTransaction()
+            .add(R.id.fragment_main, writerFragment).commit();
+
         //Set navigation buttons
         var button = findViewById<Button>(R.id.button)
         //button.setOnClickListener{getPoemItems()}
 
-           var reader_button = findViewById<Button>(R.id.reader_button)
-           reader_button.setOnClickListener {
-           supportFragmentManager.commit {
-               if(pageViewerPosition>=0)
-                   readerFragment.SetPageViewerPosition(pageViewerPosition)
-               setReorderingAllowed(true)
-               val transaction: FragmentTransaction = supportFragmentManager.beginTransaction()
-               transaction.replace(R.id.fragment_main, readerFragment)
-               transaction.commit()
-           }
+       var reader_button = findViewById<Button>(R.id.reader_button)
+       reader_button.setOnClickListener {
+       supportFragmentManager.commit {
+           if(pageViewerPosition>=0)
+               readerFragment.SetPageViewerPosition(pageViewerPosition)
+           setReorderingAllowed(true)
+           val transaction: FragmentTransaction = supportFragmentManager.beginTransaction()
+           transaction.replace(R.id.fragment_main, readerFragment)
+           transaction.commit()
+            }
        }
 
        var writer_button = findViewById<Button>(R.id.writer_button)

@@ -7,3 +7,8 @@ import kotlinx.parcelize.Parcelize
 data class PoemItem(val id:Int, val poem:String): Parcelable{
 
 }
+
+@Parcelize
+data class PoemItemDto(val poem:String): Parcelable{
+
+}
