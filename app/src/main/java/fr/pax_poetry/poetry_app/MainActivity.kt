@@ -15,7 +15,6 @@ import retrofit2.Response
 class MainActivity : ReaderFragment.OnPositionPass, AppCompatActivity() {
 
     var clientPoetryAPI = ClientPoetryAPI();
-    lateinit var text_obj: TextView
     var writerFragment:WriterFragment=WriterFragment()
     var readerFragment:ReaderFragment=ReaderFragment()
     var poemList : List<PoemItem>? = listOf<PoemItem>()
@@ -34,19 +33,10 @@ class MainActivity : ReaderFragment.OnPositionPass, AppCompatActivity() {
             .add(R.id.fragment_main, writerFragment).commit();
 
         //Set navigation buttons
-        var button = findViewById<Button>(R.id.button)
-        //button.setOnClickListener{getPoemItems()}
 
        var reader_button = findViewById<Button>(R.id.reader_button)
        reader_button.setOnClickListener {
-       supportFragmentManager.commit {
-           if(pageViewerPosition>=0)
-               readerFragment.SetPageViewerPosition(pageViewerPosition)
-           setReorderingAllowed(true)
-           val transaction: FragmentTransaction = supportFragmentManager.beginTransaction()
-           transaction.replace(R.id.fragment_main, readerFragment)
-           transaction.commit()
-            }
+           getPoemItems()
        }
 
        var writer_button = findViewById<Button>(R.id.writer_button)
@@ -64,7 +54,7 @@ class MainActivity : ReaderFragment.OnPositionPass, AppCompatActivity() {
     }
 
     private fun getPoemItems(){
-        clientPoetryAPI.service.getPoemsItem().enqueue(object : Callback <List<PoemItem>> {
+        clientPoetryAPI.service.getItems().enqueue(object : Callback <List<PoemItem>> {
             override fun onResponse(call: Call<List<PoemItem>>, response: Response<List<PoemItem>>) {
 
                 poemList = response.body()
@@ -72,6 +62,14 @@ class MainActivity : ReaderFragment.OnPositionPass, AppCompatActivity() {
                 poemList?.let {
                     //TODO manage the case we dont obtain a list (network error)
                     readerFragment.InitializePoemList(it)
+                    supportFragmentManager.commit {
+                        if(pageViewerPosition>=0)
+                            readerFragment.SetPageViewerPosition(pageViewerPosition)
+                        setReorderingAllowed(true)
+                        val transaction: FragmentTransaction = supportFragmentManager.beginTransaction()
+                        transaction.replace(R.id.fragment_main, readerFragment)
+                        transaction.commit()
+                    }
                 }
             }
 

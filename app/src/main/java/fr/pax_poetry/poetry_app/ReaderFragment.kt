@@ -17,7 +17,6 @@ import fr.pax_poetry.poetry_app.metier.PoemItem
 class ReaderFragment() : Fragment() {
 
     private lateinit var mPager: ViewPager2
-    private var cardViewList = mutableListOf<Cardviewfragment>()
     private var poemList = mutableListOf<PoemItem>()
     private var savedPosition:Int = -1
     private var actualPosition: Int = 0

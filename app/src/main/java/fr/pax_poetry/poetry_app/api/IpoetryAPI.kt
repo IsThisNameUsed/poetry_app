@@ -4,13 +4,7 @@ package fr.pax_poetry.poetry_app.api
 import fr.pax_poetry.poetry_app.metier.PoemItem
 import fr.pax_poetry.poetry_app.metier.PoemItemDto
 import retrofit2.Call
-import retrofit2.http.GET
-import retrofit2.http.Path
-import retrofit2.http.Body
-
-import retrofit2.http.POST
-
-
+import retrofit2.http.*
 
 
 interface IpoetryAPI {
@@ -21,11 +15,14 @@ interface IpoetryAPI {
     }
 
     @GET("todoitems/")
-    fun getPoemsItem(): Call<List<PoemItem>>
+    fun getItems(): Call<List<PoemItem>>
 
     @GET("todoitems/{id}")
-    fun getPoemItemAt(@Path("id") id: Int): Call<PoemItem>
+    fun getItemAt(@Path("id") id: Int): Call<PoemItem>
 
     @POST("todoitems")
-    fun sendText(@Body poemItem:PoemItemDto): Call<PoemItemDto>
+    fun sendItem(@Body poemItem:PoemItemDto): Call<PoemItemDto>
+
+    @DELETE
+    fun deleteItem(@Path("id") id: Int)
 }

@@ -7,10 +7,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
-import android.widget.Toast
 import androidx.fragment.app.Fragment
 import fr.pax_poetry.poetry_app.api.ClientPoetryAPI
-import fr.pax_poetry.poetry_app.metier.PoemItem
 import fr.pax_poetry.poetry_app.metier.PoemItemDto
 import retrofit2.Call
 import retrofit2.Callback
@@ -48,16 +46,13 @@ class WriterFragment : Fragment() {
         if(clientPoetryAPI==null || poemItem.poem=="")
             return
 
-        clientPoetryAPI?.service?. sendText(poemItem)?.enqueue(object : Callback<PoemItemDto> {
+        clientPoetryAPI?.service?. sendItem(poemItem)?.enqueue(object : Callback<PoemItemDto> {
             override fun onResponse(call: Call<PoemItemDto>, response: Response<PoemItemDto>) {
 
                 val poemResponse = response.body()
-
                 poemResponse?.let {
-
                 }
             }
-
             override fun onFailure(call: Call<PoemItemDto>, t: Throwable) {
                 Log.e("REG", "Error : $t")
             }
