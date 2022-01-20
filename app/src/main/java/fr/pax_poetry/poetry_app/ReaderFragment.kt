@@ -11,6 +11,7 @@ import androidx.fragment.app.FragmentManager
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.MarginPageTransformer
 import androidx.viewpager2.widget.ViewPager2
+import com.google.android.material.internal.ViewUtils
 import fr.pax_poetry.poetry_app.metier.PoemItem
 
 

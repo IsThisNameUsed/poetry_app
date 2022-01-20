@@ -2,8 +2,10 @@
 <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/cardView"
-    android:layout_width="300dp"
-    android:layout_height="500dp"
+    android:layout_width="0dp"
+    android:layout_height="0dp"
+    app:layout_constraintWidth_percent="0.9"
+    app:layout_constraintHeight_percent="0.9"
     android:layout_gravity="center"
     app:cardBackgroundColor="@color/primaryBlue"
     app:cardCornerRadius="25dp">
