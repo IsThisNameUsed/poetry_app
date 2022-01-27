@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto">
@@ -11,6 +12,20 @@
         android:orientation="horizontal"
         app:layout_constraintGuide_percent="0.04"/>
 
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guideLine2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.938"/>
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/vertical_guideLine"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.5"/>
+
     <androidx.viewpager2.widget.ViewPager2
         android:id="@+id/pager"
         android:layout_width="0dp"
@@ -21,5 +36,27 @@
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toBottomOf="@id/guideLine"
         />
+    <Button
+        android:id="@+id/save_button"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/guideLine2"
+        app:layout_constraintHeight_percent="0.05"
+        app:layout_constraintWidth_percent="0.35"
+        app:layout_constraintRight_toRightOf="@id/vertical_guideLine"
+        android:layout_marginLeft="10dp"
+        android:text="save"
+        android:textSize="18sp"/>
 
+    <Button
+        android:id="@+id/favoris_button"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintHeight_percent="0.05"
+        app:layout_constraintTop_toBottomOf="@id/guideLine2"
+        app:layout_constraintWidth_percent="0.35"
+        app:layout_constraintLeft_toLeftOf="@id/vertical_guideLine"
+        android:layout_marginLeft="10dp"
+        android:text="Favoris"
+        android:textSize="18sp"/>
 </androidx.constraintlayout.widget.ConstraintLayout>

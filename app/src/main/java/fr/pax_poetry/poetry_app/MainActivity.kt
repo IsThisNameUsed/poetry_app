@@ -1,10 +1,10 @@
 package fr.pax_poetry.poetry_app
 
+
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.widget.Button
-import android.widget.TextView
 import androidx.fragment.app.*
 import fr.pax_poetry.poetry_app.api.ClientPoetryAPI
 import fr.pax_poetry.poetry_app.metier.PoemItem
@@ -19,6 +19,11 @@ class MainActivity : ReaderFragment.OnPositionPass, AppCompatActivity() {
     var readerFragment:ReaderFragment=ReaderFragment()
     var poemList : List<PoemItem>? = listOf<PoemItem>()
     var pageViewerPosition: Int = -1
+
+    fun multiply(a:Int,b: Int): Int
+    {
+        return a * b
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -61,7 +66,7 @@ class MainActivity : ReaderFragment.OnPositionPass, AppCompatActivity() {
 
                 poemList?.let {
                     //TODO manage the case we dont obtain a list (network error)
-                    readerFragment.InitializePoemList(it)
+                    readerFragment.InitializeItemListFromApi(it)
                     supportFragmentManager.commit {
                         if(pageViewerPosition>=0)
                             readerFragment.SetPageViewerPosition(pageViewerPosition)

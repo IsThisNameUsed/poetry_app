@@ -1,6 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="fr.pax_poetry.poetry_app">
+    package="fr.pax_poetry.poetry_app"
+    xmlns:tools="http://schemas.android.com/tools">
+
+
+
+    <!-- ENABLE PERMISSIONS ABOUT EXTERNAL STORAGE ACCESS -->
+
+
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        tools:ignore="ScopedStorage" />
+
 
     <application
         android:allowBackup="true"
@@ -8,7 +19,8 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Poetry_app">
+        android:theme="@style/Theme.Poetry_app"
+        android:requestLegacyExternalStorage="true">
         <activity
             android:name=".MainActivity"
             android:exported="true">
