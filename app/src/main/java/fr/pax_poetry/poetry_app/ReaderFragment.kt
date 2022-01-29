@@ -16,9 +16,7 @@ import android.os.Environment
 import android.widget.Button
 import java.io.File
 import android.widget.Toast
-import androidx.core.view.get
-import androidx.fragment.app.FragmentActivity
-import androidx.fragment.app.FragmentTransaction
+import java.util.regex.Pattern
 
 
 class ReaderFragment() : Fragment() {
@@ -37,10 +35,6 @@ class ReaderFragment() : Fragment() {
     private lateinit var switchButton: Button
     private lateinit var saveButton: Button
 
-   fun SetPageViewerPosition(savedPosition: Int){
-        this.savedPosition = savedPosition
-    }
-
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.reading_fragment_layout,container,false)
 
@@ -51,13 +45,15 @@ class ReaderFragment() : Fragment() {
 
         // Instantiate a ViewPager and a PagerAdapter.
         mPager = view!!.findViewById(R.id.pager)
+        mPager.setOnClickListener {
+            Toast.makeText(context, "CLICK PAGER", Toast.LENGTH_LONG).show()
+        }
 
         // The pager adapter provides the pages to the view pager.
         pagerAdapter = ScreenSlidePagerAdapter(childFragmentManager)
 
         state = pagerAdapter.saveState()
-
-        //mPager.offsetLeftAndRight(3)
+        mPager.offsetLeftAndRight(1)
         mPager.setSaveEnabled(false)
         mPager.setPageTransformer(MarginPageTransformer(80))
         mPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
@@ -77,7 +73,6 @@ class ReaderFragment() : Fragment() {
         saveButton.setOnClickListener {writeOnExternalStorage()}
 
         switchButton = view!!.findViewById(R.id.favoris_button)
-
         switchButton.setOnClickListener {
            if(!readFromStorage) {
                readFromStorage()
@@ -94,12 +89,18 @@ class ReaderFragment() : Fragment() {
 
     private inner class ScreenSlidePagerAdapter(fm: FragmentManager) : FragmentStateAdapter(fm,this.lifecycle) {
 
+        lateinit var currentItem: Cardviewfragment
         override fun getItemCount(): Int = poemList.size
 
-        override fun createFragment(position: Int):  Cardviewfragment
-        {
-            return Cardviewfragment(poemList[position])
+        override fun createFragment(position: Int): Cardviewfragment {
+            currentItem=Cardviewfragment(poemList[position])
+            return currentItem
         }
+    }
+
+
+    fun SetPageViewerPosition(savedPosition: Int){
+        this.savedPosition = savedPosition
     }
 
     fun passData(position: Int){
@@ -115,9 +116,7 @@ class ReaderFragment() : Fragment() {
         fun onPositionPass(data: Int)
     }
 
-
     private fun readFromStorage() {
-
         if (SaveTextUtils.isExternalStorageReadable()) {
             var directory: File
 
@@ -150,7 +149,8 @@ class ReaderFragment() : Fragment() {
             if(SaveTextUtils.separator.compareTo(item) != 0)
                 sb.append(item)
             else {
-                poemList.add(sb.toString())
+                val text = SaveTextUtils.cleanStringWhithPattern(sb.toString(),"\n*")
+                poemList.add(text)
                 sb.clear()
             }
         }
@@ -169,6 +169,22 @@ class ReaderFragment() : Fragment() {
             poemList.add(item.poem)
         }
     }
+
+    fun onCLickCardView(){
+        if(readFromStorage)
+        {
+            var text = poemList[mPager.currentItem]
+            Toast.makeText(context, "DELETE: "+ text, Toast.LENGTH_LONG).show()
+            deleteFavoriteOnExternalStorage(text)
+        }
+    }
+
+    private fun deleteFavoriteOnExternalStorage(text: String){
+        var directory: File = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)
+        SaveTextUtils.deleteTextFromStorage(directory,context,FILENAME,FOLDERNAME, text)
+        readFromStorage()
+    }
+
     private fun writeOnExternalStorage() {
         if (SaveTextUtils.isExternalStorageWritable()) {
             val directory: File
@@ -176,7 +192,8 @@ class ReaderFragment() : Fragment() {
             directory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)
             //directory = getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS)
 
-            SaveTextUtils.setTextInStorage(directory,context,FILENAME,FOLDERNAME,poemList[savedPosition])
+            var text = poemList[savedPosition] + SaveTextUtils.separator.toString() + System.lineSeparator()
+            SaveTextUtils.setTextInStorage(directory,context,FILENAME,FOLDERNAME,text)
 
         } else {
             Toast.makeText(context, "external_storage_impossible_create_file", Toast.LENGTH_LONG).show()

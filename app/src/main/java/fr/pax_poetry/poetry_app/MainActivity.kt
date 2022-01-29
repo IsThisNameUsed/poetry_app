@@ -4,7 +4,9 @@ package fr.pax_poetry.poetry_app
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import android.widget.Button
+import android.widget.Toast
 import androidx.fragment.app.*
 import fr.pax_poetry.poetry_app.api.ClientPoetryAPI
 import fr.pax_poetry.poetry_app.metier.PoemItem
@@ -54,6 +56,10 @@ class MainActivity : ReaderFragment.OnPositionPass, AppCompatActivity() {
            }
        }
 
+        var lol = findViewById<View>(R.id.fragment_main)
+        lol.setOnClickListener {
+            Toast.makeText(this.baseContext, "CLICK MAIN ACTIVITY", Toast.LENGTH_LONG).show()
+        }
         //Send poems data to reader fragment
         getPoemItems()
     }
