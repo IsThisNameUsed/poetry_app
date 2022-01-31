@@ -13,7 +13,6 @@ import androidx.fragment.app.Fragment
 import org.jetbrains.annotations.NotNull
 import java.lang.Exception
 
-
 class Cardviewfragment(val text:String): Fragment(){
 
     private lateinit var poemText:String
@@ -34,10 +33,10 @@ class Cardviewfragment(val text:String): Fragment(){
             readerFragment.onCLickCardView()
         }
 
-        view?.setOnLongClickListener {
+       /* view?.setOnLongClickListener {
             Toast.makeText(context, "LONG CLICK READER", Toast.LENGTH_LONG).show()
             readerFragment.onCLickCardView()
             true
-        }
+        }*/
     }
 }

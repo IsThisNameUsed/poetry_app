@@ -20,6 +20,9 @@ class SaveTextUtils {
             return File(folder, fileName)
         }
 
+        // ----------------------------------
+        // OPERATIONS ON FILE
+        // ----------------------------------
         private fun readOnFile(context: Context, file: File): String? {
             var result: String? = null
             if (file.exists()) {
@@ -138,6 +141,10 @@ class SaveTextUtils {
             return Environment.MEDIA_MOUNTED == state || Environment.MEDIA_MOUNTED_READ_ONLY == state
         }
 
+
+        // ----------------------------------
+        // UTILS
+        // ----------------------------------
         fun cleanStringWhithPattern(sample:String, regex:String ):String {
 
             if (sample != null && regex != null) {

@@ -57,9 +57,7 @@ class MainActivity : ReaderFragment.OnPositionPass, AppCompatActivity() {
        }
 
         var lol = findViewById<View>(R.id.fragment_main)
-        lol.setOnClickListener {
-            Toast.makeText(this.baseContext, "CLICK MAIN ACTIVITY", Toast.LENGTH_LONG).show()
-        }
+
         //Send poems data to reader fragment
         getPoemItems()
     }
@@ -83,7 +81,6 @@ class MainActivity : ReaderFragment.OnPositionPass, AppCompatActivity() {
                     }
                 }
             }
-
             override fun onFailure(call: Call<List<PoemItem>>, t: Throwable) {
                 Log.e("REG", "Error : $t")
             }
