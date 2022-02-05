@@ -16,7 +16,13 @@ import android.os.Environment
 import android.widget.Button
 import java.io.File
 import android.widget.Toast
-import java.util.regex.Pattern
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.Observer
+import fr.pb.roomandviewmodel.PoemViewModel
+import fr.pb.roomandviewmodel.WordViewModelFactory
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 
 class ReaderFragment() : Fragment() {
@@ -26,7 +32,7 @@ class ReaderFragment() : Fragment() {
 
     private var readFromStorage = false
     private lateinit var mPager: ViewPager2
-    private var itemList = mutableListOf<PoemItem>()
+    private var itemList = listOf<PoemItem>()
     private var poemList = mutableListOf<String>()
     private var savedPosition:Int = -1
     lateinit var positionPasser: OnPositionPass
@@ -34,10 +40,17 @@ class ReaderFragment() : Fragment() {
     private lateinit var pagerAdapter:ScreenSlidePagerAdapter
     private lateinit var switchButton: Button
     private lateinit var saveButton: Button
+    val repository = PoemRepository()
+    private val poemViewModel: PoemViewModel by viewModels {
+        WordViewModelFactory(repository)
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?){
+        CoroutineScope(Dispatchers.Main).launch{setDataObserver() }
+    }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.reading_fragment_layout,container,false)
-
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
@@ -80,10 +93,18 @@ class ReaderFragment() : Fragment() {
                saveButton.visibility = View.INVISIBLE
                }
            else{
-               readFromApi()
-               switchButton.text = getResources().getString(R.string.favoris_button)
+               CoroutineScope(Dispatchers.Main).launch{getPoemItems()}
+               switchButton.text = resources.getString(R.string.favoris_button)
                saveButton.visibility = View.VISIBLE
            }
+        }
+    }
+
+    override fun onHiddenChanged(hidden: Boolean) {
+        super.onHiddenChanged(hidden)
+        if(!isHidden)
+        {
+            CoroutineScope(Dispatchers.Main).launch{getPoemItems()}
         }
     }
 
@@ -98,6 +119,20 @@ class ReaderFragment() : Fragment() {
         }
     }
 
+    suspend fun setDataObserver(){
+
+        // Create the observer which updates the UI.
+        val dataObserver = Observer<List<PoemItem>> { newList ->
+            itemList = newList
+            readFromApi()
+        }
+        // Observe the LiveData, passing in this activity as the LifecycleOwner and the observer.
+        poemViewModel.remotePoemList.observe(this, dataObserver)
+    }
+
+    private suspend fun getPoemItems(){
+        CoroutineScope(Dispatchers.Main).launch{poemViewModel.getRemotePoemListFromApi()}
+    }
 
     fun SetPageViewerPosition(savedPosition: Int){
         this.savedPosition = savedPosition
@@ -128,20 +163,14 @@ class ReaderFragment() : Fragment() {
 
             var result = SaveTextUtils.getTextFromStorage(directory, context,FILENAME,FOLDERNAME)
             if (result != null) {
-                InitializePoemListFromFavoris(result)
+                initializePoemListFromFavoris(result)
                 mPager!!.adapter = pagerAdapter
                 readFromStorage = true;
             }
         }
     }
 
-    private fun readFromApi() {
-        InitializePoemListFromItemList()
-        mPager!!.adapter = pagerAdapter
-        readFromStorage = false;
-    }
-
-    fun InitializePoemListFromFavoris(favorisString : String){
+    fun initializePoemListFromFavoris(favorisString : String){
         poemList.clear()
         val sb = StringBuilder()
         for(item in favorisString)
@@ -156,10 +185,10 @@ class ReaderFragment() : Fragment() {
         }
     }
 
-    fun InitializeItemListFromApi(poemListInput : List<PoemItem>){
-        itemList.clear()
-        itemList.addAll(poemListInput)
+    private fun readFromApi() {
         InitializePoemListFromItemList()
+        mPager!!.adapter = pagerAdapter
+        readFromStorage = false;
     }
 
     private fun InitializePoemListFromItemList(){
@@ -178,6 +207,7 @@ class ReaderFragment() : Fragment() {
             deleteFavoriteOnExternalStorage(text)
         }
     }
+
 
     private fun deleteFavoriteOnExternalStorage(text: String){
         var directory: File = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)
