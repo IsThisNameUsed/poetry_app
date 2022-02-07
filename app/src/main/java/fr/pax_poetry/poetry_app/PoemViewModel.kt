@@ -1,32 +1,40 @@
 package fr.pb.roomandviewmodel
 
+
+import android.util.Log
 import androidx.lifecycle.*
 import fr.pax_poetry.poetry_app.PoemRepository
+import fr.pax_poetry.poetry_app.api.ClientPoetryAPI
 import fr.pax_poetry.poetry_app.metier.PoemItem
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.Flow
-import retrofit2.Call
+import java.net.SocketTimeoutException
+import kotlin.coroutines.coroutineContext
 
-class PoemViewModel(private val repository: PoemRepository) : ViewModel() {
+class PoemViewModel() : ViewModel() {
 
-    // Using LiveData and caching what allWords returns has several benefits:
-    // - We can put an observer on the data (instead of polling for changes) and only update the
-    //   the UI when the data actually changes.
-    // - Repository is completely separated from the UI through the ViewModel.
     var remotePoemList: MutableLiveData<List<PoemItem>> = MutableLiveData<List<PoemItem>>()
 
     suspend fun getRemotePoemListFromApi(){
-        val request = CoroutineScope(Dispatchers.Default).launch{repository.getPoemItemsSync()}
-        request.join()
-        remotePoemList.value = repository.remotePoemList
+        try{
+            val request = CoroutineScope(Dispatchers.IO).async{PoemRepository.getPoemItems2()}
+            Log.d("COR","PoemViewModel cor" + coroutineContext.toString())
+            request.await()
+        } catch(ce: SocketTimeoutException){
+            ClientPoetryAPI.service.getItems().cancel()
+            Log.d("VIEW MODEL", "SocketTimeoutException")
+            throw ce
+        }
+        //request.join()
+        remotePoemList.postValue(PoemRepository.remotePoemList)
+
     }
 }
 
-class WordViewModelFactory(private val repository: PoemRepository) : ViewModelProvider.Factory {
+class WordViewModelFactory() : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(PoemViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return PoemViewModel(repository) as T
+            return PoemViewModel() as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

@@ -13,16 +13,17 @@ import androidx.viewpager2.widget.MarginPageTransformer
 import androidx.viewpager2.widget.ViewPager2
 import fr.pax_poetry.poetry_app.metier.PoemItem
 import android.os.Environment
+import android.util.Log
 import android.widget.Button
 import java.io.File
 import android.widget.Toast
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
+import fr.pax_poetry.poetry_app.api.ClientPoetryAPI
 import fr.pb.roomandviewmodel.PoemViewModel
 import fr.pb.roomandviewmodel.WordViewModelFactory
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
+import java.net.SocketTimeoutException
 
 
 class ReaderFragment() : Fragment() {
@@ -40,10 +41,10 @@ class ReaderFragment() : Fragment() {
     private lateinit var pagerAdapter:ScreenSlidePagerAdapter
     private lateinit var switchButton: Button
     private lateinit var saveButton: Button
-    val repository = PoemRepository()
-    private val poemViewModel: PoemViewModel by viewModels {
-        WordViewModelFactory(repository)
+    val poemViewModel: PoemViewModel by viewModels {
+        WordViewModelFactory()
     }
+
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?){
         CoroutineScope(Dispatchers.Main).launch{setDataObserver() }
@@ -55,6 +56,7 @@ class ReaderFragment() : Fragment() {
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
+
 
         // Instantiate a ViewPager and a PagerAdapter.
         mPager = view!!.findViewById(R.id.pager)
@@ -119,36 +121,25 @@ class ReaderFragment() : Fragment() {
         }
     }
 
-    suspend fun setDataObserver(){
+    fun setDataObserver(){
 
         // Create the observer which updates the UI.
         val dataObserver = Observer<List<PoemItem>> { newList ->
             itemList = newList
-            readFromApi()
+            initializePoemListFromItemList()
         }
         // Observe the LiveData, passing in this activity as the LifecycleOwner and the observer.
         poemViewModel.remotePoemList.observe(this, dataObserver)
     }
 
     private suspend fun getPoemItems(){
-        CoroutineScope(Dispatchers.Main).launch{poemViewModel.getRemotePoemListFromApi()}
-    }
-
-    fun SetPageViewerPosition(savedPosition: Int){
-        this.savedPosition = savedPosition
-    }
-
-    fun passData(position: Int){
-        positionPasser.onPositionPass(position)
-    }
-
-    override fun onAttach(context: Context) {
-        super.onAttach(context)
-        positionPasser = context as OnPositionPass
-    }
-
-    interface OnPositionPass {
-        fun onPositionPass(data: Int)
+        try {
+            CoroutineScope(Dispatchers.IO).async{ poemViewModel.getRemotePoemListFromApi() }
+        }catch(ce: SocketTimeoutException){
+            ClientPoetryAPI.service.getItems().cancel()
+            Log.d("READER FRAGL", "SocketTimeoutException")
+            throw ce
+        }
     }
 
     private fun readFromStorage() {
@@ -164,7 +155,7 @@ class ReaderFragment() : Fragment() {
             var result = SaveTextUtils.getTextFromStorage(directory, context,FILENAME,FOLDERNAME)
             if (result != null) {
                 initializePoemListFromFavoris(result)
-                mPager!!.adapter = pagerAdapter
+                majPageViewerData()
                 readFromStorage = true;
             }
         }
@@ -185,18 +176,36 @@ class ReaderFragment() : Fragment() {
         }
     }
 
-    private fun readFromApi() {
-        InitializePoemListFromItemList()
+    private fun majPageViewerData() {
         mPager!!.adapter = pagerAdapter
-        readFromStorage = false;
     }
 
-    private fun InitializePoemListFromItemList(){
+
+    private fun initializePoemListFromItemList(){
         poemList.clear()
         for(item in itemList)
         {
             poemList.add(item.poem)
         }
+        readFromStorage = false
+        majPageViewerData()
+    }
+
+    fun SetPageViewerPosition(savedPosition: Int){
+        this.savedPosition = savedPosition
+    }
+
+    fun passData(position: Int){
+        positionPasser.onPositionPass(position)
+    }
+
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        positionPasser = context as OnPositionPass
+    }
+
+    interface OnPositionPass {
+        fun onPositionPass(data: Int)
     }
 
     fun onCLickCardView(){
