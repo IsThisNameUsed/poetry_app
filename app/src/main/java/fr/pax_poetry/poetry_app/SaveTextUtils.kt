@@ -119,9 +119,9 @@ class SaveTextUtils {
             return deleteFromFile(context!!, file, textToDelete)
         }
 
-        fun setTextInStorage(rootDestination: File?,context: Context?,fileName: String?,folderName: String?,text: String?) {
+        fun setTextInStorage(rootDestination: File?,context: Context?,fileName: String?,folderName: String?,text: String?, append:Boolean=true) {
             val file = createOrGetFile(rootDestination!!, fileName!!, folderName!!)
-            writeOnFile(context!!, text!!, file)
+            writeOnFile(context!!, text!!, file, append)
         }
 
 

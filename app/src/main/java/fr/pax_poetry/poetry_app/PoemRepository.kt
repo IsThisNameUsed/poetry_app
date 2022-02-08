@@ -1,6 +1,5 @@
 package fr.pax_poetry.poetry_app
 
-import android.content.Context
 import android.util.Log
 import fr.pax_poetry.poetry_app.api.ClientPoetryAPI
 import fr.pax_poetry.poetry_app.metier.PoemItem
@@ -11,38 +10,86 @@ import retrofit2.Callback
 import retrofit2.Response
 import retrofit2.awaitResponse
 import java.io.IOException
-import java.net.ConnectException
-import java.net.SocketTimeoutException
 import kotlin.coroutines.coroutineContext
 
 class PoemRepository {
 
     companion object instance {
+        private val FILENAME = "poemOfflineBackup.txt"
+        private val FOLDERNAME = "poemApp"
+
         var clientPoetryAPI = ClientPoetryAPI()
-        var remotePoemList = listOf<PoemItem>()
+        var remotePoemList =mutableListOf<String>()
+        var offlineRemotePoemList = mutableListOf<String>()
+
+
+        fun saveOfflineData(){
+            val context = MainActivity.getApplicationContext()
+            val directory = context.filesDir
+            var text = ""
+            for(poem in remotePoemList)
+            {
+                text += poem + SaveTextUtils.separator.toString() + System.lineSeparator()
+            }
+
+            SaveTextUtils.setTextInStorage(directory,context,FILENAME,FOLDERNAME,text,false)
+        }
+
+
+        fun getOfflineData()
+        {
+            val context = MainActivity.getApplicationContext()
+            val directory = context.filesDir
+            var text: String?
+            text = SaveTextUtils.getTextFromStorage(directory,context,FILENAME,FOLDERNAME)!!
+            val sb = StringBuilder()
+            for(item in text)
+            {
+                if(SaveTextUtils.separator.compareTo(item) != 0)
+                    sb.append(item)
+                else {
+                    val text = SaveTextUtils.cleanStringWhithPattern(sb.toString(),"\n*")
+                    offlineRemotePoemList.add(text)
+                    sb.clear()
+                }
+            }
+        }
+
+        fun fillStringListWithItems(itemList: List<PoemItem>)
+        {
+            remotePoemList.clear()
+            for(item in itemList)
+            {
+                remotePoemList.add(item.poem)
+            }
+        }
 
         suspend fun getPoemItems2() {
             Log.d("COR","PoemRepo cor" + coroutineContext.toString())
             runBlocking {
                 try {
                     val response = ClientPoetryAPI.service.getItems().awaitResponse()
-                    if (!response.isSuccessful) throw  IOException("Unexpected code " + response)
-                    remotePoemList = response.body()!!
-                }catch(ce: SocketTimeoutException){
-                    ClientPoetryAPI.service.getItems().cancel()
-                    Log.d("API CALL", "SocketTimeoutException")
-                    throw ce
-                } catch (ce: ConnectException) {
-                    throw ce
+                    val itemList = response.body()!!
+                    fillStringListWithItems(itemList)
                 } catch (e: IOException) {
+                    Log.d("API CALL", "IOException, no response from API")
+
                     throw e
                 }
                 finally {
 
-                    Log.d("API CALL", "FINALLY")
+
                 }
+                /*}catch(e: SocketTimeoutException){
+                    //ClientPoetryAPI.service.getItems().cancel()
+                    Log.d("API CALL", "SocketTimeoutException")
+                    throw e
+                } catch (e: ConnectException) {
+                    throw e*/
             }
         }
+
+
 
         suspend fun getPoemItems() {
             Log.d("COR","PoemRepo cor" + coroutineContext.toString())
@@ -51,7 +98,8 @@ class PoemRepository {
                 override fun onResponse(call: Call<List<PoemItem>>,response: Response<List<PoemItem>>) {
                     var body = response.body()!!
                     body?.let {
-                        remotePoemList = body
+                        val itemList = response.body()!!
+                        fillStringListWithItems(itemList)
                     }
                 }
 

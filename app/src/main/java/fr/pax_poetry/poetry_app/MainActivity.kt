@@ -4,14 +4,12 @@ package fr.pax_poetry.poetry_app
 import android.content.Context
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log
+import android.os.PersistableBundle
 import android.view.View
 import android.widget.Button
 import android.widget.Toast
 import androidx.fragment.app.*
-import fr.pax_poetry.poetry_app.api.ClientPoetryAPI
 import kotlinx.coroutines.*
-import java.net.SocketTimeoutException
 
 class MainActivity : ReaderFragment.OnPositionPass, AppCompatActivity() {
 
@@ -21,6 +19,16 @@ class MainActivity : ReaderFragment.OnPositionPass, AppCompatActivity() {
 
     init {
         instance = this
+    }
+
+    override fun onStart() {
+        super.onStart()
+        readerFragment.poemViewModel.getOfflineData()
+    }
+    override fun onStop() {
+        super.onStop()
+        //Todo move the poemViewModel ref in ActivityMain? Singleton?
+        readerFragment.poemViewModel.saveOfflineData()
     }
 
     companion object {

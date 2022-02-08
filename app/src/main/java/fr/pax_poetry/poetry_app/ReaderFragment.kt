@@ -23,6 +23,7 @@ import fr.pax_poetry.poetry_app.api.ClientPoetryAPI
 import fr.pb.roomandviewmodel.PoemViewModel
 import fr.pb.roomandviewmodel.WordViewModelFactory
 import kotlinx.coroutines.*
+import java.io.IOException
 import java.net.SocketTimeoutException
 
 
@@ -95,7 +96,7 @@ class ReaderFragment() : Fragment() {
                saveButton.visibility = View.INVISIBLE
                }
            else{
-               CoroutineScope(Dispatchers.Main).launch{getPoemItems()}
+               CoroutineScope(Dispatchers.Main).async{getPoemItems()}
                switchButton.text = resources.getString(R.string.favoris_button)
                saveButton.visibility = View.VISIBLE
            }
@@ -106,7 +107,7 @@ class ReaderFragment() : Fragment() {
         super.onHiddenChanged(hidden)
         if(!isHidden)
         {
-            CoroutineScope(Dispatchers.Main).launch{getPoemItems()}
+            CoroutineScope(Dispatchers.Main).async{getPoemItems()}
         }
     }
 
@@ -124,9 +125,11 @@ class ReaderFragment() : Fragment() {
     fun setDataObserver(){
 
         // Create the observer which updates the UI.
-        val dataObserver = Observer<List<PoemItem>> { newList ->
-            itemList = newList
-            initializePoemListFromItemList()
+        val dataObserver = Observer<MutableList<String>> { newList ->
+            poemList = newList
+            readFromStorage = false
+            majPageViewerData()
+            //initializePoemListFromItemList()
         }
         // Observe the LiveData, passing in this activity as the LifecycleOwner and the observer.
         poemViewModel.remotePoemList.observe(this, dataObserver)
@@ -134,12 +137,18 @@ class ReaderFragment() : Fragment() {
 
     private suspend fun getPoemItems(){
         try {
-            CoroutineScope(Dispatchers.IO).async{ poemViewModel.getRemotePoemListFromApi() }
-        }catch(ce: SocketTimeoutException){
-            ClientPoetryAPI.service.getItems().cancel()
-            Log.d("READER FRAGL", "SocketTimeoutException")
-            throw ce
+            val request=CoroutineScope(Dispatchers.IO).async{ poemViewModel.getRemotePoemListFromApi()}
+            Log.d("COR","PoemViewModel cor" + kotlin.coroutines.coroutineContext.toString())
+            request.await()
+        } catch (e: IOException) {
+            Toast.makeText(context, "no response from server", Toast.LENGTH_LONG).show()
+            throw e
         }
+       /* }catch(ce: SocketTimeoutException){
+            ClientPoetryAPI.service.getItems().cancel()
+            Log.d("READER FRAG", "SocketTimeoutException")
+            throw ce
+        }*/
     }
 
     private fun readFromStorage() {
@@ -148,7 +157,6 @@ class ReaderFragment() : Fragment() {
 
             //External public
             directory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)
-
             // External - Private
             //directory = getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS)
 
