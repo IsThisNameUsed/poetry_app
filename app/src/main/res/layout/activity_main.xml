@@ -42,7 +42,7 @@
             android:id="@+id/reader_button"
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:text="READER"
+            android:text="@string/reader"
             app:layout_constraintStart_toStartOf="@id/guideLine1"
             app:layout_constraintWidth_percent="0.40"/>
 
@@ -50,7 +50,7 @@
             android:id="@+id/writer_button"
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:text="WRITER"
+            android:text="@string/writer"
             app:layout_constraintEnd_toEndOf="@id/guideLine2"
             app:layout_constraintWidth_percent="0.40" />
 

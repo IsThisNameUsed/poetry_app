@@ -7,6 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import fr.pax_poetry.poetry_app.api.ClientPoetryAPI
 import fr.pax_poetry.poetry_app.metier.PoemItemDto
@@ -34,18 +35,24 @@ class WriterFragment : Fragment() {
     }
 
     private fun sendTextToServer(){
-        Log.d("D","sendTextToServer")
+        if(!MainActivity.isConnected())
+        {
+            Toast.makeText(context, "no available connection", Toast.LENGTH_LONG).show()
+            return
+        }
         val poemItem = PoemItemDto(text_editor.text.toString())
-
-        ClientPoetryAPI?.service?. sendItem(poemItem)?.enqueue(object : Callback<PoemItemDto> {
+        ClientPoetryAPI?.service?.sendItem(poemItem)?.enqueue(object : Callback<PoemItemDto> {
             override fun onResponse(call: Call<PoemItemDto>, response: Response<PoemItemDto>) {
 
                 val poemResponse = response.body()
                 poemResponse?.let {
+                    Toast.makeText(context, "text successfully send", Toast.LENGTH_LONG).show()
+                    text_editor.text.clear()
                 }
             }
             override fun onFailure(call: Call<PoemItemDto>, t: Throwable) {
                 Log.e("REG", "Error : $t")
+                Toast.makeText(context, "no response from server, impossible to send the text", Toast.LENGTH_LONG).show()
             }
         })
     }

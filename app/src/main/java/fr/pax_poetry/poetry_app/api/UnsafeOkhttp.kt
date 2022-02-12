@@ -64,7 +64,7 @@ class UnsafeOkHttpClient {
                 trustAllCerts[0] as X509TrustManager
             )
             builder.hostnameVerifier { hostname, session -> true }
-            builder.addNetworkInterceptor(NetworkConnectionInterceptor(MainActivity.getApplicationContext()))
+            //builder.addNetworkInterceptor(NetworkConnectionInterceptor(MainActivity.getApplicationContext()))
             builder.build()
 
 

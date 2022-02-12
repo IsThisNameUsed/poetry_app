@@ -12,5 +12,7 @@
     <color name="secondaryBlue">#074d7e</color>
     <color name="secondaryBlueLight">#4879ae</color>
     <color name="secondaryBlueDark">#002651</color>
+    <color name="red"> #d32f2f</color>
+    <color name="green">#2e7d32</color>
 
 </resources>
