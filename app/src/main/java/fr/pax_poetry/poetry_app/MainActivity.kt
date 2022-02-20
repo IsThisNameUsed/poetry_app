@@ -71,13 +71,6 @@ class MainActivity : ReaderFragment.OnPositionPass, AppCompatActivity() {
             .hide(readerFragment).commit()
 
 
-        /*CoroutineScope(Dispatchers.IO).async{
-            Log.d("COR","MainActivity cor BEGIN" + kotlin.coroutines.coroutineContext.toString())
-            readerFragment.poemViewModel.getRemotePoemList()
-            Log.d("COR","MainActivity cor END" + kotlin.coroutines.coroutineContext.toString())
-        }*/
-
-
         supportFragmentManager.beginTransaction()
             .add(R.id.fragment_main, writerFragment).commit()
 
@@ -150,6 +143,7 @@ class MainActivity : ReaderFragment.OnPositionPass, AppCompatActivity() {
         //tv.textAlignment = View.TEXT_ALIGNMENT_CENTER
         snackbar.show()
     }
+
     override fun onPositionPass(position: Int) {
         pageViewerPosition = position
     }

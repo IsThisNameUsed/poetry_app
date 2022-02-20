@@ -5,40 +5,47 @@ import android.content.Context
 import android.util.Log
 import android.widget.Toast
 import androidx.lifecycle.*
-import fr.pax_poetry.poetry_app.MainActivity
-import fr.pax_poetry.poetry_app.PoemRepository
+import fr.pax_poetry.poetry_app.*
 import kotlinx.coroutines.*
 import java.io.IOException
+import javax.inject.Inject
+import javax.inject.Singleton
 import kotlin.coroutines.coroutineContext
 
 class PoemViewModel() : ViewModel() {
 
     var remotePoemList: MutableLiveData<MutableList<String>> = MutableLiveData<MutableList<String>>()
     var favoritesPoemList: MutableLiveData<MutableList<String>> = MutableLiveData<MutableList<String>>()
+    val applicationGraph: ApplicationGraph = DaggerApplicationGraph.create()
+    val poemRepository: PoemRepository = applicationGraph.providePoemRepository()
+
+    fun test(){
+        Log.i("INFO","VIEW MODEL TEST")
+    }
 
     fun saveOfflineData()
     {
-        PoemRepository.saveOfflineData()
+        poemRepository.saveOfflineData()
     }
 
     fun getOfflineData()
     {
-        PoemRepository.getOfflineData()
+        poemRepository.getOfflineData()
     }
 
     fun getOfflinePoemList()
     {
-        remotePoemList.postValue(PoemRepository.offlineRemotePoemList)
+        remotePoemList.postValue(poemRepository.offlineRemotePoemList)
     }
 
     suspend fun getRemotePoemList(){
         try{
             Log.d("COR","PoemViewModel cor START" + coroutineContext.toString())
-            val request = CoroutineScope(Dispatchers.IO).async{PoemRepository.getPoemListFromApi()}
+            val request = CoroutineScope(Dispatchers.IO).async{poemRepository.getPoemListFromApi()}
             request.join()
-            remotePoemList.postValue(PoemRepository.remotePoemList)
+            remotePoemList.postValue(poemRepository.remotePoemList)
         } catch (e: IOException) {
-            if(PoemRepository.offlineRemotePoemList!=null && PoemRepository.remotePoemList.size==0 )
+            if(poemRepository.offlineRemotePoemList!=null && poemRepository.remotePoemList.size==0 )
                 getOfflinePoemList()
             throw e
         }
@@ -56,12 +63,13 @@ class PoemViewModel() : ViewModel() {
 
     fun getFavoritesPoemList(context: Context)
     {
-        PoemRepository.getPoemListFromFavoritesFile(context)
-        favoritesPoemList.postValue(PoemRepository.favoritesPoemList)
+        poemRepository.getPoemListFromFavoritesFile(context)
+        favoritesPoemList.postValue(poemRepository.favoritesPoemList)
     }
 }
 
-class WordViewModelFactory() : ViewModelProvider.Factory {
+@Singleton
+class PoemViewModelFactory @Inject constructor() : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(PoemViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")

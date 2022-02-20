@@ -19,12 +19,9 @@ import android.widget.Toast
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
 import fr.pb.roomandviewmodel.PoemViewModel
-import fr.pb.roomandviewmodel.WordViewModelFactory
+import fr.pb.roomandviewmodel.PoemViewModelFactory
 import kotlinx.coroutines.*
 import java.io.IOException
-
-
-
 
 class ReaderFragment : Fragment() {
 
@@ -42,10 +39,11 @@ class ReaderFragment : Fragment() {
     private lateinit var pagerAdapter:ScreenSlidePagerAdapter
     private lateinit var switchButton: Button
     private lateinit var saveButton: Button
+    val applicationGraph: ApplicationGraph = DaggerApplicationGraph.create()
+    val saveTextUtils: SaveTextUtils = applicationGraph.provideSaveTextUtils()
     val poemViewModel: PoemViewModel by viewModels {
-        WordViewModelFactory()
+        applicationGraph.providePoemViewModel()
     }
-
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?){
         CoroutineScope(Dispatchers.Main).launch{
@@ -60,8 +58,6 @@ class ReaderFragment : Fragment() {
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
-
-
         // Instantiate a ViewPager and a PagerAdapter.
         mPager = view!!.findViewById(R.id.pager)
         mPager.setOnClickListener {
@@ -82,9 +78,6 @@ class ReaderFragment : Fragment() {
                 super.onPageSelected(position)
             }
         })
-
-        if(savedPosition>=0)
-            mPager.setCurrentItem(savedPosition, false)
 
         mPager.adapter = pagerAdapter
 
@@ -113,6 +106,8 @@ class ReaderFragment : Fragment() {
         if(!isHidden)
         {
             getPoemItemsData()
+            if(savedPosition>=0)
+                mPager.setCurrentItem(savedPosition, false)
         }
     }
 
@@ -188,10 +183,10 @@ class ReaderFragment : Fragment() {
         val sb = StringBuilder()
         for(item in favorisString)
         {
-            if(SaveTextUtils.separator.compareTo(item) != 0)
+            if(saveTextUtils.separator.compareTo(item) != 0)
                 sb.append(item)
             else {
-                val text = SaveTextUtils.cleanStringWhithPattern(sb.toString(),"\n*")
+                val text = saveTextUtils.cleanStringWhithPattern(sb.toString(),"\n*")
                 apiPoemList.add(text)
                 sb.clear()
             }
@@ -231,17 +226,17 @@ class ReaderFragment : Fragment() {
 
     private fun deleteFavoriteOnExternalStorage(text: String){
         val directory: File = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)
-        SaveTextUtils.deleteTextFromStorage(directory,context,filename,folderName, text)
+        saveTextUtils.deleteTextFromStorage(directory,context,filename,folderName, text)
         showFavoritesPoemList()
     }
 
     private fun writeOnExternalStorage() {
-        if (SaveTextUtils.isExternalStorageWritable()) {
+        if (saveTextUtils.isExternalStorageWritable()) {
 
             val directory: File = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)
             //directory = getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS)
-            val text = pageViewerPoemList[savedPosition] + SaveTextUtils.separator.toString() + System.lineSeparator()
-            SaveTextUtils.setTextInStorage(directory,context,filename,folderName,text)
+            val text = pageViewerPoemList[savedPosition] + saveTextUtils.separator.toString() + System.lineSeparator()
+            saveTextUtils.setTextInStorage(directory,context,filename,folderName,text)
             context?.let { poemViewModel.getFavoritesPoemList(it) }
 
         } else {

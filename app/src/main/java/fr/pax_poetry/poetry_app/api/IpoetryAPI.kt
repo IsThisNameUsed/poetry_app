@@ -11,7 +11,6 @@ interface IpoetryAPI {
 
     companion object {
         val ENDPOINT = "https://10.0.2.2:7095/api/"
-
     }
 
     @GET("todoitems/")
@@ -19,6 +18,9 @@ interface IpoetryAPI {
 
     @GET("todoitems/{id}")
     fun getItemAt(@Path("id") id: Int): Call<PoemItem>
+
+    @GET("todoitems/page/{page}")
+    fun getPage(@Path("page") id: Int): Call<List<PoemItem>>
 
     @POST("todoitems")
     fun sendItem(@Body poemItem:PoemItemDto): Call<PoemItemDto>
