@@ -1,5 +1,10 @@
 package fr.pax_poetry.poetry_app.api
 
+import NetworkConnectionInterceptor
+import android.annotation.SuppressLint
+import android.content.Context
+import fr.pax_poetry.poetry_app.MainActivity
+import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import java.lang.Exception
 import java.lang.RuntimeException
@@ -11,14 +16,17 @@ import javax.net.ssl.TrustManager
 import javax.net.ssl.X509TrustManager
 
 
-object UnsafeOkHttpClient {
-    // Create a trust manager that does not validate certificate chains
-    val unsafeOkHttpClient: OkHttpClient
 
-    // Install the all-trusting trust manager
+class UnsafeOkHttpClient {
 
+    companion object instance {
+
+        // Create a trust manager that does not validate certificate chains
+
+        // Install the all-trusting trust manager
         // Create an ssl socket factory with our all-trusting manager
-        get() = try {
+
+        val unsafeOkHttpClient: OkHttpClient = try {
             // Create a trust manager that does not validate certificate chains
             val trustAllCerts =
                 arrayOf<TrustManager>(
@@ -36,7 +44,6 @@ object UnsafeOkHttpClient {
                             authType: String
                         ) {
                         }
-
                         override fun getAcceptedIssuers(): Array<X509Certificate> {
                             return arrayOf()
                         }
@@ -50,14 +57,19 @@ object UnsafeOkHttpClient {
 
             // Create an ssl socket factory with our all-trusting manager
             val sslSocketFactory = sslContext.socketFactory
+
             val builder = OkHttpClient.Builder()
             builder.sslSocketFactory(
                 sslSocketFactory,
                 trustAllCerts[0] as X509TrustManager
             )
             builder.hostnameVerifier { hostname, session -> true }
+            //builder.addNetworkInterceptor(NetworkConnectionInterceptor(MainActivity.getApplicationContext()))
             builder.build()
+
+
         } catch (e: Exception) {
             throw RuntimeException(e)
         }
+    }
 }
