@@ -9,23 +9,36 @@ import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
+import android.view.TextureView
 import android.view.View
 import android.widget.Button
 import android.widget.FrameLayout
+import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.*
-import kotlinx.coroutines.*
+import androidx.lifecycle.Observer
 import com.google.android.material.snackbar.Snackbar
+import fr.pax_poetry.poetry_app.api.ServerStatusManager
+import android.net.NetworkInfo
+import fr.pax_poetry.poetry_app.api.ClientPoetryAPI
+import fr.pax_poetry.poetry_app.api.UnsafeOkHttpClient
+import kotlinx.coroutines.*
+import java.io.IOException
+import java.net.HttpURLConnection
+import java.net.MalformedURLException
+import java.net.URL
 
 
-class MainActivity : ReaderFragment.OnPositionPass, AppCompatActivity() {
+class MainActivity : AppCompatActivity() {
 
     private var writerFragment:WriterFragment=WriterFragment()
     private var readerFragment:ReaderFragment=ReaderFragment()
     private var pageViewerPosition: Int = -1
     private lateinit var mainView: View
+    private lateinit var connectivityStatus: TextView
+    var serverOnline : Boolean = false
 
     fun multiply(a:Int,b: Int): Int
     {
@@ -35,6 +48,8 @@ class MainActivity : ReaderFragment.OnPositionPass, AppCompatActivity() {
     companion object {
         private var instance: MainActivity? = null
         private var isConnected: Boolean = false
+        val applicationGraph: ApplicationGraph = DaggerApplicationGraph.create()
+        val serverStatusManager = applicationGraph.provideServerStatusManager()
 
         fun getApplicationContext() : Context {
             return instance!!.applicationContext
@@ -43,16 +58,19 @@ class MainActivity : ReaderFragment.OnPositionPass, AppCompatActivity() {
         fun isConnected():Boolean{
             return isConnected
         }
+
     }
 
     init {
         instance = this
+        serverStatusManager.setServerStatus(false)
     }
 
     override fun onStart() {
         super.onStart()
         readerFragment.poemViewModel.getOfflineData()
     }
+
     override fun onStop() {
         super.onStop()
         //Todo move the poemViewModel ref in ActivityMain? Singleton?
@@ -64,7 +82,10 @@ class MainActivity : ReaderFragment.OnPositionPass, AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        setDataObservers()
+
         mainView = findViewById<FrameLayout>(R.id.fragment_main)
+        connectivityStatus = findViewById(R.id.connectivityStatus)
         supportFragmentManager.beginTransaction()
             .add(R.id.fragment_main, readerFragment).commit()
         supportFragmentManager.beginTransaction()
@@ -87,8 +108,6 @@ class MainActivity : ReaderFragment.OnPositionPass, AppCompatActivity() {
            }
 
            supportFragmentManager.commit {
-               if(pageViewerPosition>=0)
-                   readerFragment.setPageViewerPosition(pageViewerPosition)
                setReorderingAllowed(true)
                val transaction: FragmentTransaction = supportFragmentManager.beginTransaction()
                transaction.show(readerFragment)
@@ -99,8 +118,6 @@ class MainActivity : ReaderFragment.OnPositionPass, AppCompatActivity() {
        val writerButton = findViewById<Button>(R.id.writer_button)
        writerButton.setOnClickListener {
            supportFragmentManager.commit {
-               if(pageViewerPosition>=0)
-                   readerFragment.setPageViewerPosition(pageViewerPosition)
                setReorderingAllowed(true)
                val transaction: FragmentTransaction = supportFragmentManager.beginTransaction()
                transaction.hide(readerFragment)
@@ -130,6 +147,23 @@ class MainActivity : ReaderFragment.OnPositionPass, AppCompatActivity() {
         connectivityManager.requestNetwork(networkRequest, networkCallback)
     }
 
+    private fun setDataObservers(){
+        val apiListObserver = Observer<Boolean> { value ->
+            serverOnline = value
+            majReaderFragmentDatas()
+            if(!serverOnline)
+                writeOnConnectivityStatus("no response from server, loading saved data")
+            else writeOnConnectivityStatus("")
+        }
+        serverStatusManager.serverOnline.observe(this, apiListObserver)
+    }
+
+    fun majReaderFragmentDatas(){
+        readerFragment.majPageViewerData()
+    }
+    fun writeOnConnectivityStatus(text:String){
+        connectivityStatus.text = text
+    }
 
     fun showSnackbar(text:String, color:Int) {
         val snackbar = Snackbar
@@ -144,9 +178,9 @@ class MainActivity : ReaderFragment.OnPositionPass, AppCompatActivity() {
         snackbar.show()
     }
 
-    override fun onPositionPass(position: Int) {
+    /*override fun onPositionPass(position: Int) {
         pageViewerPosition = position
-    }
+    }*/
 
 
     private val networkCallback = object : ConnectivityManager.NetworkCallback() {
@@ -173,4 +207,6 @@ class MainActivity : ReaderFragment.OnPositionPass, AppCompatActivity() {
             isConnected = false
         }
     }
+
+
 }

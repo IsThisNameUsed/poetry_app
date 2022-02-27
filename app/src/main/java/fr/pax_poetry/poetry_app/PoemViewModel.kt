@@ -3,9 +3,9 @@ package fr.pb.roomandviewmodel
 
 import android.content.Context
 import android.util.Log
-import android.widget.Toast
 import androidx.lifecycle.*
 import fr.pax_poetry.poetry_app.*
+import fr.pax_poetry.poetry_app.api.ServerStatusManager
 import kotlinx.coroutines.*
 import java.io.IOException
 import javax.inject.Inject
@@ -33,26 +33,29 @@ class PoemViewModel() : ViewModel() {
         poemRepository.getOfflineData()
     }
 
-    fun getOfflinePoemList()
+    fun displayOfflinePoemList()
     {
         remotePoemList.postValue(poemRepository.offlineRemotePoemList)
     }
 
-    suspend fun getRemotePoemList(){
-        try{
-            Log.d("COR","PoemViewModel cor START" + coroutineContext.toString())
-            val request = CoroutineScope(Dispatchers.IO).async{poemRepository.getPoemListFromApi()}
-            request.join()
-            remotePoemList.postValue(poemRepository.remotePoemList)
-        } catch (e: IOException) {
-            if(poemRepository.offlineRemotePoemList!=null && poemRepository.remotePoemList.size==0 )
-                getOfflinePoemList()
-            throw e
+    suspend fun getRemotePoemList(newPageNumber: Int){
+        Log.d("COR","PoemViewModel cor START" + coroutineContext.toString())
+        val request = CoroutineScope(Dispatchers.IO).async{
+            try{
+                poemRepository.getPoemListFromApi(newPageNumber)
+            }
+            catch(e: IOException){
+                Log.d("sata","SSHX" )
+                throw e
+            }
+            finally{
+                if(poemRepository.offlineRemotePoemList!=null && poemRepository.remotePoemList.size==0 )
+                    displayOfflinePoemList()
+                else remotePoemList.postValue(poemRepository.remotePoemList)
+            }
         }
-        finally {
-            Log.d("COR","PoemViewModel cor END FINALLY" + coroutineContext.toString())
+        request.join()
 
-        }
         /*} catch(ce: SocketTimeoutException){
             ClientPoetryAPI.service.getItems().cancel()
             Log.d("VIEW MODEL", "SocketTimeoutException")

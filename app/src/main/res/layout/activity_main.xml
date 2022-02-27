@@ -22,7 +22,7 @@
         android:layout_height="0dp"
         android:orientation="horizontal"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintHeight_percent="0.08">
+        app:layout_constraintHeight_percent="0.10">
 
         <androidx.constraintlayout.widget.Guideline
             android:id="@+id/guideLine1"
@@ -38,21 +38,35 @@
             android:orientation="vertical"
             app:layout_constraintGuide_percent="0.45"/>
 
+        <TextView
+            android:id="@+id/connectivityStatus"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            android:textAlignment="center"
+            app:layout_constraintWidth_percent="0.80"
+        app:layout_constraintHeight_percent="0.25"/>
         <Button
             android:id="@+id/reader_button"
             android:layout_width="0dp"
-            android:layout_height="match_parent"
+            android:layout_height="0dp"
             android:text="@string/reader"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="@id/guideLine1"
-            app:layout_constraintWidth_percent="0.40"/>
+            app:layout_constraintWidth_percent="0.40"
+            app:layout_constraintHeight_percent="0.75"/>
 
         <Button
             android:id="@+id/writer_button"
             android:layout_width="0dp"
-            android:layout_height="match_parent"
+            android:layout_height="0dp"
             android:text="@string/writer"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="@id/guideLine2"
-            app:layout_constraintWidth_percent="0.40" />
+            app:layout_constraintWidth_percent="0.40"
+            app:layout_constraintHeight_percent="0.75"/>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

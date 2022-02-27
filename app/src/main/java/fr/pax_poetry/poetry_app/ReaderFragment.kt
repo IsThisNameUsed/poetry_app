@@ -1,6 +1,5 @@
 package fr.pax_poetry.poetry_app
 
-import android.content.Context
 import android.os.Bundle
 import android.os.Parcelable
 import android.view.LayoutInflater
@@ -19,7 +18,6 @@ import android.widget.Toast
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
 import fr.pb.roomandviewmodel.PoemViewModel
-import fr.pb.roomandviewmodel.PoemViewModelFactory
 import kotlinx.coroutines.*
 import java.io.IOException
 
@@ -27,14 +25,19 @@ class ReaderFragment : Fragment() {
 
     private val filename = "favori.txt"
     private val folderName = "favoris"
-
-    private var readFromStorage = false
+    private val loadingNewPageMaxPosition = 8
+    private val loadingNewPageMinPosition = 1
     private lateinit var mPager: ViewPager2
-    private var apiPoemList = mutableListOf<String>()
+    private var poemListToDisplay = mutableListOf<String>()
     private var favoritesPoemList = mutableListOf<String>()
     private var pageViewerPoemList = mutableListOf<String>()
+    private var displayingFavorites = false
+    private var displayingOfflineList = false
+    private var navigateBack = false
+    private var backFromFavorites = false
+    private var pageNumber = 1
     private var savedPosition:Int = -1
-    private lateinit var positionPasser: OnPositionPass
+    //private lateinit var positionPasser: OnPositionPass
     private lateinit var state:Parcelable
     private lateinit var pagerAdapter:ScreenSlidePagerAdapter
     private lateinit var switchButton: Button
@@ -58,13 +61,13 @@ class ReaderFragment : Fragment() {
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
-        // Instantiate a ViewPager and a PagerAdapter.
+
+        // ----- Instantiate a ViewPager and a PagerAdapter.
         mPager = view!!.findViewById(R.id.pager)
         mPager.setOnClickListener {
             Toast.makeText(context, "CLICK PAGER", Toast.LENGTH_LONG).show()
         }
 
-        // The pager adapter provides the pages to the view pager.
         pagerAdapter = ScreenSlidePagerAdapter(childFragmentManager)
 
         state = pagerAdapter.saveState()
@@ -73,41 +76,62 @@ class ReaderFragment : Fragment() {
         mPager.setPageTransformer(MarginPageTransformer(80))
         mPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
             override fun onPageSelected(position: Int) {
-                passData(position)
-                savedPosition = position
                 super.onPageSelected(position)
+                setPageViewerSavedPosition(position)
+                if(!MainActivity.isConnected())
+                {
+                    return
+                }
+                else if(displayingFavorites)
+                    return
+                majPageViewerData(position)
+                //passData(position)
             }
         })
-
         mPager.adapter = pagerAdapter
 
+        // ----- Set Buttons
         saveButton = view!!.findViewById(R.id.save_button)
         saveButton.setOnClickListener {writeOnExternalStorage()}
 
         switchButton = view!!.findViewById(R.id.favoris_button)
         switchButton.setOnClickListener {
-           if(!readFromStorage) {
+           if(!displayingFavorites) {
+               displayingFavorites = true
                showFavoritesPoemList()
-               readFromStorage = true
                switchButton.text = resources.getString(R.string.read_button)
                saveButton.visibility = View.INVISIBLE
                }
            else{
-               getPoemItemsData()
-               readFromStorage = false
+               backFromFavorites = true
+               displayingFavorites = false
+               getPoemItemsData(pageNumber)
                switchButton.text = resources.getString(R.string.favoris_button)
                saveButton.visibility = View.VISIBLE
            }
         }
+
+        getPoemItemsData(pageNumber)
     }
 
+    fun majPageViewerData(position: Int = savedPosition){
+        if(position >= loadingNewPageMaxPosition){
+            pageNumber = pageNumber + 1
+            navigateBack = false
+            getPoemItemsData(pageNumber)
+        }
+        else if(position <= loadingNewPageMinPosition && pageNumber>1)
+        {
+            pageNumber = pageNumber - 1
+            navigateBack = true
+            getPoemItemsData(pageNumber)
+        }
+    }
     override fun onHiddenChanged(hidden: Boolean) {
         super.onHiddenChanged(hidden)
         if(!isHidden)
         {
-            getPoemItemsData()
-            if(savedPosition>=0)
-                mPager.setCurrentItem(savedPosition, false)
+            //getPoemItemsData(pageNumber)
         }
     }
 
@@ -117,7 +141,7 @@ class ReaderFragment : Fragment() {
         override fun getItemCount(): Int = pageViewerPoemList.size
 
         override fun createFragment(position: Int): Cardviewfragment {
-            currentItem=Cardviewfragment(pageViewerPoemList[position])
+            currentItem = Cardviewfragment(pageViewerPoemList[position])
             return currentItem
         }
     }
@@ -125,7 +149,8 @@ class ReaderFragment : Fragment() {
     private fun setDataObservers(){
 
         val apiListObserver = Observer<MutableList<String>> { newList ->
-            apiPoemList = newList
+            //displayingOfflineList = !MainActivity.serverStatusManager.getServerStatus()
+            poemListToDisplay = newList
             showApiPoemList()
         }
         poemViewModel.remotePoemList.observe(this, apiListObserver)
@@ -137,49 +162,47 @@ class ReaderFragment : Fragment() {
 
     }
 
-    private fun getPoemItemsData()
+    private fun getPoemItemsData(newPageNumber: Int)
     {
         if(!MainActivity.isConnected())
         {
-            Toast.makeText(context, "no available connection, load saved data", Toast.LENGTH_LONG).show()
-            poemViewModel.getOfflinePoemList()
+            //Toast.makeText(context, "no available connection, load saved data", Toast.LENGTH_LONG).show()
+            poemViewModel.displayOfflinePoemList()
             return
         }
         else{
-            CoroutineScope(Dispatchers.IO).async{getPoemItemsRemoteData()}
+            CoroutineScope(Dispatchers.IO).async{getPoemItemsRemoteData(newPageNumber)}
         }
     }
 
-    private suspend fun getPoemItemsRemoteData(){
-        try {
-            val request=CoroutineScope(Dispatchers.IO).async{ poemViewModel.getRemotePoemList()}
-            Log.d("COR","ReaderFragment cor START" + kotlin.coroutines.coroutineContext.toString())
-            request.await()
-            Log.d("COR","ReaderFragment cor END1" + kotlin.coroutines.coroutineContext.toString())
-        } catch (e: IOException) {
-            Toast.makeText(context, "no response from server", Toast.LENGTH_LONG).show()
-            throw e
+    private suspend fun getPoemItemsRemoteData(newPageNumber: Int){
+
+        val request=CoroutineScope(Dispatchers.IO).async {
+            try {
+                poemViewModel.getRemotePoemList(newPageNumber)
+                Log.d("COR","ReaderFragment cor START" + kotlin.coroutines.coroutineContext.toString())
+            } catch (e: IOException) {
+               throw e
+            }
         }
-       /* }catch(ce: SocketTimeoutException){
-            ClientPoetryAPI.service.getItems().cancel()
-            Log.d("READER FRAG", "SocketTimeoutException")
-            throw ce
-        }*/
-        Log.d("COR","ReaderFragment cor END2" + kotlin.coroutines.coroutineContext.toString())
+        request.await()
     }
 
     private fun showApiPoemList() {
-        pageViewerPoemList = apiPoemList
-        majPageViewerData()
+        if(pageViewerPoemList != poemListToDisplay)
+        {
+            pageViewerPoemList = poemListToDisplay.toMutableList()
+            majPageViewerDataDisplayed()
+        }
     }
 
     private fun showFavoritesPoemList() {
-        pageViewerPoemList = favoritesPoemList
-        majPageViewerData()
+        pageViewerPoemList = favoritesPoemList.toMutableList()
+        majPageViewerDataDisplayed()
     }
 
     private fun initializePoemListFromFavoris(favorisString : String){
-        apiPoemList.clear()
+        poemListToDisplay.clear()
         val sb = StringBuilder()
         for(item in favorisString)
         {
@@ -187,21 +210,38 @@ class ReaderFragment : Fragment() {
                 sb.append(item)
             else {
                 val text = saveTextUtils.cleanStringWhithPattern(sb.toString(),"\n*")
-                apiPoemList.add(text)
+                poemListToDisplay.add(text)
                 sb.clear()
             }
         }
     }
 
-    private fun majPageViewerData() {
-        mPager.adapter = pagerAdapter
+    private fun majPageViewerDataDisplayed() {
+        if(backFromFavorites) {
+            backFromFavorites = false
+            mPager.adapter = pagerAdapter
+            mPager.setCurrentItem(savedPosition, false)
+        }
+        else if(displayingFavorites)
+            mPager.adapter = pagerAdapter
+        else if(displayingOfflineList)
+            mPager.adapter = pagerAdapter
+        else if(!navigateBack)
+            pagerAdapter.notifyItemRangeRemoved (0, 5)
+        else if(navigateBack){
+            pagerAdapter.notifyItemRangeRemoved (5, 5)
+            pagerAdapter.notifyItemRangeInserted (0,5)
+        }
+        else mPager.adapter = pagerAdapter
     }
 
-    fun setPageViewerPosition(savedPosition: Int){
-        this.savedPosition = savedPosition
+    //save the position for return from favorites and writer fragment
+    fun setPageViewerSavedPosition(savedPosition: Int){
+        if(!displayingFavorites)
+            this.savedPosition = savedPosition
     }
 
-    fun passData(position: Int){
+    /*fun passData(position: Int){
         positionPasser.onPositionPass(position)
     }
 
@@ -212,12 +252,12 @@ class ReaderFragment : Fragment() {
 
     interface OnPositionPass {
         fun onPositionPass(position: Int)
-    }
+    }*/
 
     fun onCLickCardView(){
-        if(readFromStorage)
+        if(displayingFavorites)
         {
-            val text = apiPoemList[mPager.currentItem]
+            val text = poemListToDisplay[mPager.currentItem]
             Toast.makeText(context, "DELETE: $text", Toast.LENGTH_LONG).show()
             deleteFavoriteOnExternalStorage(text)
         }

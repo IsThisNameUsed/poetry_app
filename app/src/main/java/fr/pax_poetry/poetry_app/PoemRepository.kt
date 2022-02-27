@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.Environment
 import android.util.Log
 import fr.pax_poetry.poetry_app.api.ClientPoetryAPI
+import fr.pax_poetry.poetry_app.api.ServerStatusManager
 import fr.pax_poetry.poetry_app.metier.PoemItem
 import fr.pax_poetry.poetry_app.metier.PoemItemDto
 import kotlinx.coroutines.runBlocking
@@ -31,6 +32,8 @@ class PoemRepository @Inject constructor(){
     var favoritesPoemList = mutableListOf<String>()
 
     fun saveOfflineData(){
+        if(remotePoemList.size<=0)
+            return
         val context = MainActivity.getApplicationContext()
         val directory = context.filesDir
         var text = ""
@@ -71,16 +74,20 @@ class PoemRepository @Inject constructor(){
         }
     }
 
-    suspend fun getPoemListFromApi() {
+    suspend fun getPoemListFromApi(newPageNumber: Int) {
         runBlocking {
             try {
                 Log.d("COR","PoemRepo cor START" + kotlin.coroutines.coroutineContext.toString())
-                val response = ClientPoetryAPI.service.getPage(1).awaitResponse()
+                val response = ClientPoetryAPI.service.getPage(newPageNumber).awaitResponse()
+                //We have a response from the server
+                MainActivity.serverStatusManager.setServerStatus(true)
                 val itemList = response.body()!!
                 fillStringListWithItems(itemList)
                 if(itemList.size>0)
                     saveOfflineData()
             } catch (e: IOException) {
+                //No response from server
+                MainActivity.serverStatusManager.setServerStatus(false)
                 Log.d("API CALL", "IOException, no response from API")
                 throw e
             }
